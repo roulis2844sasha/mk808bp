@@ -5,3 +5,5 @@ sudo modprobe 8723bs
 sudo sed -i -e '$d' /etc/rc.local
 sudo sh -c 'echo "modprobe 8723bs\nexit 0" >> /etc/rc.local'
 sudo passwd minipc
+sudo dpkg-reconfigure tzdata
+sudo ibus-setup

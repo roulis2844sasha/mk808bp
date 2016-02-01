@@ -1,9 +1,89 @@
 #!/bin/bash
-sudo cp 8723bs.ko /lib/modules/3.10.70/kernel/drivers/net/wireless/
-sudo depmod -a
-sudo modprobe 8723bs
-sudo sed -i -e '$d' /etc/rc.local
-sudo sh -c 'echo "modprobe 8723bs\nexit 0" >> /etc/rc.local'
-sudo passwd minipc
-sudo dpkg-reconfigure tzdata
-sudo ibus-setup
+
+size() {
+	while read B dummy; do
+		[ $B -lt 1024 ] && echo ${B} B && break
+		KB=$(((B+512)/1024))
+		[ $KB -lt 1024 ] && echo ${KB} KB && break
+		MB=$(((KB+512)/1024))
+		[ $MB -lt 1024 ] && echo ${MB} MB && break
+		GB=$(((MB+512)/1024))
+		[ $GB -lt 1024 ] && echo ${GB} GB && break
+	done
+}
+
+img() {
+	echo $(
+		bash -c "$(
+			echo -n  dialog --menu \
+			    \"Choose wich USB stick have to be installed\" 22 76 17;
+			    #echo -n \ client \"\" ;
+			    echo -n \ desktop \"\" ;
+			)" 2>&1 >/dev/tty
+	)
+}
+
+usb() {
+	export USBKEYS=($(
+		grep -Hv ^0$ /sys/block/*/removable |
+		sed s/removable:.*$/device\\/uevent/ |
+		xargs grep -H ^DRIVER=sd |
+		sed s/device.uevent.*$/size/ |
+		xargs grep -Hv ^0$ |
+		cut -d / -f 4
+	))
+	case ${#USBKEYS[@]} in
+		0 ) echo No USB Stick found; exit 0 ;;
+		1 ) STICK=$USBKEYS ;;
+		* )
+		STICK=$(
+		bash -c "$(
+		    echo -n  dialog --menu \
+		        \"Choose wich USB stick have to be installed\" 22 76 17;
+		    for dev in ${USBKEYS[@]} ;do
+		        echo -n \ "$dev" \"$(sudo blockdev --getsize64 /dev/$dev | size) - [$(
+		            sed -e s/\ *$//g </sys/block/$dev/device/model
+		            )]\" ;
+		        done
+		    )" 2>&1 >/dev/tty
+		)
+		;;
+	esac
+	[ "$STICK" ] || exit 0
+	echo $STICK
+}
+
+if [ "$1" == 'dev' ]; then
+	echo 'Enable devel mode'
+	[ "$2" ] || exit 0
+	sudo modprobe loop
+	loop=`sudo losetup -f`
+	sudo losetup $loop $2
+	sudo partprobe $loop
+	sudo gparted $loop
+	sudo losetup -d $loop
+	fdisk -l $2
+	echo 'End image'
+	read end
+	[ "$end" ] || exit 0
+	truncate --size=$[($end+1)*512] $2
+else
+	echo 'Install'
+	mkdir -p ~/.config/roulis2844sasha/mk808bp
+	cd ~/.config/roulis2844sasha/mk808bp
+	img=`img`
+	wget https://github.com/roulis2844sasha/mk808bp/raw/master/$img.img.xz
+	unxz $img.img.xz
+	if [ -f "$img.img" ]; then
+		usb=`usb`
+		filesize=$(stat -c%s "$img.img");
+		var=`sudo blockdev --getsize64 /dev/$usb`
+		if (( "$filesize" < "$var" )); then
+			clear
+			echo "Version: $img"
+			echo "Usb: $usb"
+			sudo dd if="$img.img" of=/dev/$usb
+		fi
+	fi
+	rm -r ~/.config/roulis2844sasha/mk808bp
+fi

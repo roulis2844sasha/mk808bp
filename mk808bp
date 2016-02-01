@@ -74,7 +74,7 @@ else
 	mkdir -p ~/.config/roulis2844sasha/mk808bp
 	cd ~/.config/roulis2844sasha/mk808bp
 	img=`img`
-	wget https://github.com/roulis2844sasha/mk808bp/raw/master/$img/$img.img.xz.part{0,1,2,3,4,5}
+	wget https://github.com/roulis2844sasha/mk808bp/raw/master/$img/$img.img.xz.part{0,1,2,3,4,5,6,7,8,9,10,11}
 	cat $img.img.xz.part* > $img.img.xz
 	unxz $img.img.xz
 	if [ -f "$img.img" ]; then

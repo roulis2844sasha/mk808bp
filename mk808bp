@@ -17,8 +17,9 @@ img() {
 		bash -c "$(
 			echo -n  dialog --menu \
 			    \"Choose wich USB stick have to be installed\" 22 76 17;
-			    #echo -n \ client \"\" ;
 			    echo -n \ desktop \"\" ;
+			    echo -n \ client \"\" ;
+			    echo -n \ server \"\" ;
 			)" 2>&1 >/dev/tty
 	)
 }
@@ -67,12 +68,14 @@ if [ "$1" == 'dev' ]; then
 	read end
 	[ "$end" ] || exit 0
 	truncate --size=$[($end+1)*512] $2
+	#split -a 1 -d -b 40M $2 $2.part
 else
 	echo 'Install'
 	mkdir -p ~/.config/roulis2844sasha/mk808bp
 	cd ~/.config/roulis2844sasha/mk808bp
 	img=`img`
-	wget https://github.com/roulis2844sasha/mk808bp/raw/master/$img.img.xz
+	wget https://github.com/roulis2844sasha/mk808bp/raw/master/$img/$img.img.xz.part{0,1,2,3,4,5}
+	cat $img.img.xz.part* > $img.img.xz
 	unxz $img.img.xz
 	if [ -f "$img.img" ]; then
 		usb=`usb`
@@ -83,6 +86,7 @@ else
 			echo "Version: $img"
 			echo "Usb: $usb"
 			sudo dd if="$img.img" of=/dev/$usb
+			sudo gparted $usb
 		fi
 	fi
 	rm -r ~/.config/roulis2844sasha/mk808bp

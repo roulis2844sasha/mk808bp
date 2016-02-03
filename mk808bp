@@ -18,8 +18,8 @@ img() {
 			echo -n  dialog --menu \
 			    \"Choose wich USB stick have to be installed\" 22 76 17;
 			    echo -n \ desktop \"\" ;
-			    echo -n \ client \"\" ;
-			    echo -n \ server \"\" ;
+			    #echo -n \ client \"\" ;
+			    #echo -n \ server \"\" ;
 			)" 2>&1 >/dev/tty
 	)
 }
@@ -70,6 +70,7 @@ if [ "$1" == 'dev' ]; then
 	truncate --size=$[($end+1)*512] $2
 	#split -a 1 -d -b 40M $2 $2.part
 else
+	sudo apt-get install dialog
 	echo 'Install'
 	mkdir -p ~/.config/roulis2844sasha/mk808bp
 	cd ~/.config/roulis2844sasha/mk808bp
